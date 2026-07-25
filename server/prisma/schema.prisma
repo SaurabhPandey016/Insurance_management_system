@@ -1,0 +1,186 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider   = "prisma-client-js"
+  engineType = "binary"
+}
+
+datasource db {
+  provider  = "postgresql"
+}
+
+enum Role {
+  ADMIN
+  AGENT
+  CUSTOMER
+}
+
+enum ClaimStatus {
+  PENDING
+  UNDER_REVIEW
+  APPROVED
+  REJECTED
+}
+
+enum PaymentStatus {
+  PAID
+  PENDING
+  OVERDUE
+}
+
+enum PolicyStatus {
+  ACTIVE
+  EXPIRED
+  RENEWING
+  CANCELLED
+}
+
+enum DocumentType {
+  IDENTITY
+  POLICY_DOC
+  CLAIM_SUPPORT
+  OTHER
+}
+
+model User {
+  id              String           @id @default(uuid())
+  email           String           @unique
+  password        String
+  role            Role
+  name            String
+  phone           String?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  
+  // Relations
+  customerProfile CustomerProfile? @relation("CustomerToProfile")
+  agentProfile    AgentProfile?    @relation("AgentToProfile")
+  
+  // Audits / Actions
+  documents       Document[]       @relation("UploadedBy")
+  claimsSubmitted Claim[]          @relation("ClaimsSubmitted")
+  claimsReviewed  Claim[]          @relation("ClaimsReviewed")
+  policiesCreated Policy[]         @relation("PoliciesCreated")
+  customersRegistered CustomerProfile[] @relation("CustomerAgent")
+}
+
+model CustomerProfile {
+  id          String   @id @default(uuid())
+  userId      String   @unique
+  user        User     @relation("CustomerToProfile", fields: [userId], references: [id], onDelete: Cascade)
+  address     String?
+  dob         DateTime?
+  agentId     String?  // The agent who registered this customer
+  agent       User?    @relation("CustomerAgent", fields: [agentId], references: [id], onDelete: SetNull)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  policies    Policy[] @relation("CustomerPolicies")
+}
+
+model AgentProfile {
+  id          String   @id @default(uuid())
+  userId      String   @unique
+  user        User     @relation("AgentToProfile", fields: [userId], references: [id], onDelete: Cascade)
+  agentCode   String   @unique
+  department  String?
+  status      String   @default("ACTIVE") // ACTIVE, SUSPENDED
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model PolicyType {
+  id            String   @id @default(uuid())
+  name          String   @unique // e.g., Health, Auto, Life, Home Insurance
+  description   String
+  basePremium   Float
+  coverageLimit Float
+  termsMonths   Int      // Duration in months, e.g. 12
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  policies      Policy[]
+}
+
+model Policy {
+  id             String       @id @default(uuid())
+  policyNumber   String       @unique // POL-XXXXXX
+  customerId     String
+  customer       CustomerProfile @relation("CustomerPolicies", fields: [customerId], references: [id], onDelete: Cascade)
+  policyTypeId   String
+  policyType     PolicyType   @relation(fields: [policyTypeId], references: [id], onDelete: Restrict)
+  premiumAmount  Float
+  coverageAmount Float
+  startDate      DateTime
+  endDate        DateTime
+  status         PolicyStatus @default(ACTIVE)
+  
+  createdById    String?      // Agent or Admin ID who issued the policy
+  createdBy      User?        @relation("PoliciesCreated", fields: [createdById], references: [id], onDelete: SetNull)
+  
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  payments       Payment[]
+  claims         Claim[]
+  documents      Document[]
+}
+
+model Claim {
+  id             String      @id @default(uuid())
+  claimNumber    String      @unique // CLM-XXXXXX
+  policyId       String
+  policy         Policy      @relation(fields: [policyId], references: [id], onDelete: Cascade)
+  customerId     String
+  customer       User        @relation("ClaimsSubmitted", fields: [customerId], references: [id], onDelete: Cascade)
+  amountRequested Float
+  description    String
+  status         ClaimStatus @default(PENDING)
+  remarks        String?     // Review notes
+  
+  reviewedById   String?
+  reviewedBy     User?       @relation("ClaimsReviewed", fields: [reviewedById], references: [id], onDelete: SetNull)
+  
+  dateSubmitted  DateTime    @default(now())
+  dateProcessed  DateTime?
+  
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  documents      Document[]
+}
+
+model Payment {
+  id             String        @id @default(uuid())
+  transactionId  String?       @unique // Populated on payment
+  policyId       String
+  policy         Policy        @relation(fields: [policyId], references: [id], onDelete: Cascade)
+  amount         Float
+  dueDate        DateTime
+  paymentDate    DateTime?
+  status         PaymentStatus @default(PENDING)
+  paymentMethod  String?       // Card, Transfer, Stripe, Cash
+  invoicePdfPath String?       // Path to receipt PDF
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+}
+
+model Document {
+  id           String       @id @default(uuid())
+  title        String
+  filePath     String       // File upload destination path
+  fileType     DocumentType
+  mimeType     String?
+  uploadedById String
+  uploadedBy   User         @relation("UploadedBy", fields: [uploadedById], references: [id], onDelete: Cascade)
+  
+  policyId     String?
+  policy       Policy?      @relation(fields: [policyId], references: [id], onDelete: SetNull)
+  
+  claimId      String?
+  claim        Claim?       @relation(fields: [claimId], references: [id], onDelete: SetNull)
+  
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+}
