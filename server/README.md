@@ -1,89 +1,99 @@
-# ⚙️ InsuraShield Server (Backend REST API)
+# ⚙️ InsuraShield Server — RESTful Express MVC Engine
 
-Welcome to the backend API of **InsuraShield**, a robust and secure insurance management platform. Developed using Node.js, Express, and Prisma v7, it implements a pure MVC (Model-View-Controller) architecture connecting to a Supabase PostgreSQL instance.
+Welcome to the backend server engine of **InsuraShield**. This repository houses the API service built on **Node.js (Express)** and integrated with **Prisma ORM v7** connecting to a managed **PostgreSQL (Supabase)** database instance.
 
----
-
-## 🔒 Security & Architecture
-- **🛡️ Clean MVC Pattern**: Decouples business logic into models, controller layers, and routers.
-- **🍪 HttpOnly Cookies**: Session tokens are transmitted via secure, HttpOnly, SameSite cookies to mitigate XSS attacks.
-- **⚡ Prisma v7 Integration**: Integrates schema mappings using runtime PostgreSQL driver pools with custom SSL chains to bypass unauthorized certifications.
-- **📑 Dynamic PDF Generator**: Compiles styled receipt invoice PDFs inside `uploads/receipts/` using `pdfkit` automatically when a payment is processed.
-- **🔍 Input Validations**: Employs Zod schemas to strictly validate user registrations, logins, claims, and template creations before processing.
-- **⚠️ Crash-Free Middleware**: Runs global exception boundaries to catch and map schema violations or database conflicts without halting the execution pool.
+It executes the platform's core logic: secure authentication, role-based validations, PDF invoice generation, file storage, and data querying.
 
 ---
 
-## 🛠️ Tech Stack
-- **Runtime**: [Node.js](https://nodejs.org/)
-- **Web Framework**: [Express.js](https://expressjs.com/)
-- **ORM**: [Prisma ORM v7](https://www.prisma.io/)
-- **Database**: [PostgreSQL (Supabase)](https://supabase.com/)
-- **Validation**: [Zod](https://zod.dev/)
-- **Authentication**: JSON Web Tokens (JWT) + `bcrypt` password hashing
-- **File Management**: `Multer` disk storage
-- **PDF Generation**: [PDFKit](https://pdfkit.org/)
+## 🏗️ Architectural Pattern: Express MVC
+To ensure scalability, modular testing, and clear segregation of concerns, the backend strictly implements the **Model-View-Controller (MVC)** architectural design:
+- **Models (`server/models/`)**: Encapsulates Prisma queries and handles complex database manipulations (e.g. generating monthly installment records upon writing a policy).
+- **Controllers (`server/controllers/`)**: Reads incoming request parameters, triggers schema validations, invokes respective database models, and shapes response structures.
+- **Routes (`server/routes/`)**: Mounts RESTful endpoints and binds route-specific middleware (auth checks, file upload capture).
 
 ---
 
-## 📂 Directory Structure
+## 🔒 Security & Middleware Pipelines
+1.  **Strict Request Validations (Zod)**: Prevents malformed payloads or SQL injection vectors. Every POST/PUT request is checked against a Zod schema defined in [validation.js](file:///c:/Users/HP/OneDrive/Desktop/Labmentix%20Projects/Project-4/Insurance_management_system/server/utils/validation.js) before hitting controllers.
+2.  **HttpOnly JWT Session Delivery**: Issues signed JWT payloads via secure, HttpOnly, SameSite cookies. This shields the application from cross-site scripting (XSS) and cross-site request forgery (CSRF) vulnerabilities.
+3.  **Bcrypt Hashing**: Secures user credentials using bcrypt with a high work factor salt to protect credentials in the database.
+4.  **Graceful Exception Boundary (errorMiddleware.js)**: A centralized Express error interceptor that maps database schema violations, Zod validation errors, and file size constraints to friendly client responses—preventing server crashes.
+5.  **Secure File Storage**: Configures `multer` disk storage policies to enforce mimetype restrictions, allowing only validated images and PDF contracts into the server's local vault directory.
+
+---
+
+## 📄 Automated Receipt Compiler (PDFKit)
+When a premium payment installment is successfully checkout-approved, the server automatically:
+- Records the transaction ID and updates the payment status to `PAID`.
+- Triggers `pdfGenerator.js` to compile a highly formatted, styled PDF invoice containing policy terms, premium rates, receipt metadata, and client details.
+- Saves the invoice in `uploads/receipts/` and makes it accessible for clients to download in the client portal.
+
+---
+
+## 📂 Backend Directory Mapping
 ```bash
 server/
 ├── prisma/
-│   ├── schema.prisma       # Prisma database models
-│   └── seed.js             # Seed script for default templates and users
-├── controllers/            # HTTP controller layers
-├── middlewares/            # Auth, Upload, and Error middlewares
-├── models/                 # Database Prisma model wrappers
-├── routes/                 # Express REST endpoint maps
-├── uploads/                # Local vault file uploads
-│   └── receipts/           # Generated PDF invoice receipts
-├── utils/
-│   ├── pdfGenerator.js     # Receipt compiler
-│   └── validation.js       # Zod validation schemas
-├── app.js                  # App bootstrap and main server configs
-├── db.js                   # Prisma Client initializer with SSL support
-└── prisma.config.ts        # Prisma datasource migrations config
+│   ├── schema.prisma       # Prisma database models (User, Profile, Policy, Claim, Payment, Document)
+│   └── seed.js             # Seed script to inject default policy templates and test profiles
+├── controllers/            # HTTP Controllers (Auth, Customers, Claims, Payments, Policies, Vault)
+├── middlewares/            # Middleware chains
+│   ├── authMiddleware.js   # Parses HttpOnly JWT cookies and checks roles
+│   ├── errorMiddleware.js  # Catches system exceptions and formats client errors
+│   └── uploadMiddleware.js # Manages Multer file uploads and validation checks
+├── models/                 # MVC Database abstraction models (Wraps Prisma logic)
+├── routes/                 # Express Router configuration endpoints
+├── uploads/                # Local vault file uploads directory
+│   └── receipts/           # Generated payment receipts PDF archive
+└── utils/
+    ├── pdfGenerator.js     # Invoice compiler using PDFKit
+    └── validation.js       # Request validation rules using Zod
 ```
 
 ---
 
-## 🚀 Setup & Execution
+## 🚀 Setup & Execution Guide
 
-### 1. Configure Environment Variables
-Create a `server/.env` file inside the `server/` directory and define your connection configurations:
+### 1. Environment Configurations
+Create a `.env` file inside the `server/` directory:
 ```env
-DATABASE_URL=postgresql://postgres.xxx:password@aws-1-ap-south-1.pooler.supabase.com:6543/postgres?pgbouncer=true&sslmode=require
-DIRECT_URL=postgresql://postgres.xxx:password@aws-1-ap-south-1.pooler.supabase.com:5432/postgres?sslmode=require
+# Database connection configurations (Supabase PostgreSQL)
+DATABASE_URL="postgresql://postgres.your_project_id:your_db_password@aws-1-ap-south-1.pooler.supabase.com:6543/postgres?pgbouncer=true&sslmode=require"
+DIRECT_URL="postgresql://postgres.your_project_id:your_db_password@aws-1-ap-south-1.pooler.supabase.com:5432/postgres?sslmode=require"
+
+# Server configuration parameters
 PORT=10000
-JWT_SECRET=your_super_secret_jwt_signature_key
-CLIENT_URL=http://localhost:3000
+JWT_SECRET="your_custom_jwt_signing_key_phrase"
+CLIENT_URL="http://localhost:3000"
 ```
 
-### 2. Install Dependencies
+### 2. Dependency Installation
 ```bash
 npm install
 ```
 
-### 3. Setup Database Schema
-Push the defined schemas and constraints to your Supabase PostgreSQL instance:
+### 3. Database Sync & Migrations
 ```bash
+# Push tables to Supabase
 npx prisma db push
 ```
 
-### 4. Seed Database
-Load the initial default policy types and seeded user roles (Admin, Agent, Customer):
+### 4. Database Seed Injection
 ```bash
+# Populate initial policy templates and testing profiles
 npm run seed
 ```
 
 ### 5. Start Express API Server
 ```bash
+# Start server in development mode with nodemon hot-reload
 npm run dev
 ```
-The server will bind locally to `http://localhost:10000`.
+The server binds locally to `http://localhost:10000`.
 
 ---
 
-## 📂 Uploads Storage
-Documents uploaded to the vault are stored inside `uploads/` using randomized disk filenames. Invoices generated upon checkouts are compiled inside `uploads/receipts/` and streamed directly back to client browsers.
+<p align="center" style="font-size: 14px; font-weight: bold; margin-top: 40px; color: #818cf8;">
+  Made with ❤️ by Saurabh Pandey
+</p>

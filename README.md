@@ -1,127 +1,167 @@
-# 🛡️ InsuraShield - Comprehensive Insurance Management Platform
+# 🛡️ InsuraShield — Digital Insurance Operations Platform
 
-[![Next.js Client](https://img.shields.io/badge/Client-Next.js%2016-indigo)](./client)
-[![Express Server](https://img.shields.io/badge/Server-Express%20MVC-blue)](./server)
-[![Database](https://img.shields.io/badge/Database-PostgreSQL%20%2F%20Prisma%20v7-emerald)](./server/prisma/schema.prisma)
-[![Developer](https://img.shields.io/badge/Made%20With%20%E2%9D%A4%20by-Saurabh%20Pandey-rose)](#-connect-with-developer)
+[![Next.js Client](https://img.shields.io/badge/Client-Next.js%2016-indigo?style=for-the-badge&logo=nextdotjs)](./client)
+[![Express Server](https://img.shields.io/badge/Server-Express%20MVC-blue?style=for-the-badge&logo=express)](./server)
+[![Prisma Schema](https://img.shields.io/badge/ORM-Prisma%20v7-emerald?style=for-the-badge&logo=prisma)](./server/prisma/schema.prisma)
+[![Supabase Database](https://img.shields.io/badge/Database-PostgreSQL%20%2F%20Supabase-emerald?style=for-the-badge&logo=supabase)](./server/prisma/schema.prisma)
+[![Developer Portfolio](https://img.shields.io/badge/Developed%20By-Saurabh%20Pandey-rose?style=for-the-badge)](#-connect-with-developer)
 
-**InsuraShield** is a state-of-the-art web platform engineered to modernize, simplify, and digitize end-to-end insurance business operations. From central policy issuing and automated monthly billing to secure claim auditing and document vault uploads, InsuraShield provides a premium, responsive, and crash-free solution.
+**InsuraShield** is a premium, robust, enterprise-grade insurance management web platform. Designed to digitize manual paper-based insurance workflows, it enables insurance companies, agents, and clients to issue policies, track monthly premium installments, audit submitted claims, and upload verified credentials from a centralized dark-mode portal.
 
 ---
 
-## 🎨 System Architecture Overview
+## 📸 Architecture & Workflow Diagram
 
 ```mermaid
 graph TD
-    A[Next.js 16 Frontend Client] -->|Fetch API / CORS / Credentials| B(Express Backend MVC Engine)
-    B -->|Prisma Pg Adapter| C[(Supabase PostgreSQL Database)]
-    B -->|HttpOnly Cookies| D[JWT Session Validation]
-    B -->|Zod Validations| E[Input Auditing Middleware]
-    B -->|PDFKit Generator| F[Dynamic Payment Receipts PDF]
-    B -->|Multer Engine| G[Local Files Uploads Storage]
+    %% Frontend Layer
+    subgraph Client [Client Portal - Next.js 16]
+        A[Next.js App Router] -->|State Management| B(AuthContext State)
+        A -->|Tailwind CSS v4 UI| C(Glassmorphic Layouts)
+        A -->|Interactive Billing| D(Premium Checkout Form)
+        A -->|Chart.js Graphs| E(Business Statistics Reports)
+    end
+
+    %% Backend Layer
+    subgraph Engine [Server Engine - Express MVC]
+        F[RESTful API Router] -->|Zod Validator| G(Input Auditing Pipe)
+        F -->|Auth Verification| H(HttpOnly JWT Validator)
+        F -->|Controllers Layer| I(Business Logic Managers)
+        I -->|PDFKit Compiler| J(Invoice Generator)
+        I -->|Multer Engine| K(Vault File Uploads)
+    end
+
+    %% Database Layer
+    subgraph Persistence [Database Layer - Supabase]
+        L[(PostgreSQL Database)]
+    end
+
+    %% Workflow relations
+    Client -->|REST Requests / CORS & Cookies| F
+    I -->|Prisma Client pg Adapter| L
 ```
 
 ---
 
-## ✨ Features & Operations
+## 🎨 Enterprise-Grade Features
 
-### 🔑 Combined Authentication & Security
-- Credentials-based auth form supporting role tabs (**Customer**, **Agent**, **Admin**).
-- Cookies-based auth flow storing JWT keys securely inside HttpOnly wrappers.
+### 🔑 Combined Authentication Panel
+*   Unified access portal for all three roles (**Customer**, **Agent**, **Admin**).
+*   Cookies-based JWT session authorization (uses HttpOnly, SameSite, Secure flags to eliminate XSS/CSRF token hijacking).
 
-### 📊 Role-Based Dashboard Dashboards
-- **👑 Administrator Panel**: Full business analytics dashboards including monthly premium collection trends, customer registration ratios, and claim status distribution charts.
-- **💼 Insurance Agent Portal**: Register new customer accounts, issue customized policies from active templates, and review claims queues.
-- **👤 Client Portal**: Check active plans, review outstanding monthly premium dues, execute payments, download PDF receipts, upload files, and file claim requests.
+### 📈 Admin Business Metrics Panel
+*   Displays critical operational analytics: Total Revenue collected, outstanding installment balances, active policies, and claim volumes.
+*   Interactive analytical widgets (powered by **Chart.js**):
+    *   *Revenue Collections Trend*: Line graph tracking collections over time.
+    *   *Claims Resolution Breakdown*: Doughnut chart mapping approved, pending, and rejected claims.
+    *   *Customer Acquisition Growth*: Bar chart tracking monthly client registration growth.
 
-### 💳 Dynamic Payments Billing
-- Monthly billing installment queues are generated automatically when a policy is written.
-- Integrated premium checkouts compile payment receipts to PDF documents on the fly.
+### 💼 Insurance Agent Workstations
+*   Register customers manually.
+*   Issue customized coverage policies (assign custom premium rates, set term dates, and link to client profiles).
+*   Review claims queue (verify descriptions and approve/reject claims with custom remarks).
 
-### 📂 File Vault System
-- Form upload integrations supporting Multer file attachments (PDF, DOCX, JPG, PNG) for identity papers and accident evidence files.
+### 👤 Customer Self-Service Client Portal
+*   View active policies, duration terms, and coverage limits.
+*   Review pending and overdue monthly premium bills.
+*   Pay premium installments instantly via the integrated checkout form.
+*   Download dynamic, styled PDF receipts containing billing breakdowns.
+*   Upload verified identification or claim proofs to the secure document vault.
+*   Submit claims and track auditing progress.
 
 ---
 
-## 📂 Project Organization
+## 📂 Project Organization & Directory Maps
 ```bash
 Insurance_management_system/
-├── client/                 # Next.js frontend application (Port 3000)
-├── server/                 # Express backend API & database layer (Port 10000)
-├── walkthrough.md          # Implementation summary document
-└── task.md                 # Project checklist tracker
+├── client/                 # Next.js 16 + Tailwind CSS v4 frontend portal
+│   ├── src/app/            # App router paths (dashboards, login, register, landing)
+│   └── src/components/     # Layouts (Navbar, Sidebar, Footer) and dashboards
+├── server/                 # Node.js + Express + Prisma v7 REST API
+│   ├── controllers/        # HTTP input parsing logic
+│   ├── models/             # Database queries wrapper layers (MVC Model abstraction)
+│   ├── routes/             # REST endpoint bindings
+│   └── utils/              # PDF Generator and Zod schema validations
+└── walkthrough.md          # Project details and validation summary
 ```
 
 ---
 
-## 🚀 Quick Execution Guide
+## 🚀 Step-by-Step Local Setup
 
-Follow these steps to run both application layers locally:
+To launch both backend and frontend layers on your system:
 
-### 1. Database and Environment Configuration
-Inside the [server/](file:///c:/Users/HP/OneDrive/Desktop/Labmentix%20Projects/Project-4/Insurance_management_system/server) directory, write your `server/.env` configuration:
+### 1. Configure Server Environments
+Navigate into the [server/](file:///c:/Users/HP/OneDrive/Desktop/Labmentix%20Projects/Project-4/Insurance_management_system/server) directory and create your `server/.env` file:
 ```env
-DATABASE_URL=postgresql://postgres.xxx:password@aws-1-ap-south-1.pooler.supabase.com:6543/postgres?pgbouncer=true&sslmode=require
-DIRECT_URL=postgresql://postgres.xxx:password@aws-1-ap-south-1.pooler.supabase.com:5432/postgres?sslmode=require
+# Connection urls to PostgreSQL (Supabase)
+DATABASE_URL="postgresql://postgres.your_id:your_password@aws-1-ap-south-1.pooler.supabase.com:6543/postgres?pgbouncer=true&sslmode=require"
+DIRECT_URL="postgresql://postgres.your_id:your_password@aws-1-ap-south-1.pooler.supabase.com:5432/postgres?sslmode=require"
+
+# Server bindings & secrets
 PORT=10000
-JWT_SECRET=your_super_secret_jwt_signature_key
-CLIENT_URL=http://localhost:3000
+JWT_SECRET="your_custom_jwt_security_signature_key"
+CLIENT_URL="http://localhost:3000"
 ```
 
-Inside the [client/](file:///c:/Users/HP/OneDrive/Desktop/Labmentix%20Projects/Project-4/Insurance_management_system/client) directory, write your `client/.env` configuration:
+### 2. Configure Client Environments
+Navigate into the [client/](file:///c:/Users/HP/OneDrive/Desktop/Labmentix%20Projects/Project-4/Insurance_management_system/client) directory and create your `client/.env` file:
 ```env
 NEXT_PUBLIC_API_URL=http://localhost:10000/api
 NEXT_PUBLIC_SERVER_URL=http://localhost:10000
 ```
 
-### 2. Setup the Server Database
-Open a terminal in the [server/](file:///c:/Users/HP/OneDrive/Desktop/Labmentix%20Projects/Project-4/Insurance_management_system/server) folder and push the Prisma schema and seed data:
+### 3. Setup and Run the Server
+Open a terminal in the [server/](file:///c:/Users/HP/OneDrive/Desktop/Labmentix%20Projects/Project-4/Insurance_management_system/server) folder:
 ```bash
-# Install server dependencies
+# Install dependencies
 npm install
 
-# Push relational tables and constraints to Supabase
+# Push database schema to Supabase instance
 npx prisma db push
 
-# Seed default policy types and users
+# Inject default policy templates & hashed test accounts
 npm run seed
-```
 
-### 3. Start the API Server
-```bash
+# Run Express server
 npm run dev
 ```
-The backend server runs on `http://localhost:10000`.
+The server will start on `http://localhost:10000`.
 
-### 4. Start the Next.js Client
+### 4. Setup and Run the Client
 Open a new terminal in the [client/](file:///c:/Users/HP/OneDrive/Desktop/Labmentix%20Projects/Project-4/Insurance_management_system/client) folder:
 ```bash
-# Install client dependencies
+# Install dependencies
 npm install
 
-# Launch client dev server
+# Build & launch client dev server
 npm run dev
 ```
-The frontend client runs on `http://localhost:3000`.
+The client portal will start on `http://localhost:3000`.
 
 ---
 
-## 🔑 Test Credentials (Pre-Seeded)
-To facilitate testing, you can log in directly using the seeded credentials:
-- **Administrator**: `admin@insurance.com` (Password: `Admin@123`)
-- **Insurance Agent**: `agent@insurance.com` (Password: `Agent@123`)
-- **Customer**: `customer@insurance.com` (Password: `Customer@123`)
+## 🔐 Seeded Accounts for Testing
+To facilitate evaluation, the seeding script populates test profiles with pre-configured relations. You can log in directly using:
+
+| User Role | Login Email | Testing Password |
+| :--- | :--- | :--- |
+| **👑 System Administrator** | `admin@insurance.com` | `Admin@123` |
+| **💼 Insurance Agent** | `agent@insurance.com` | `Agent@123` |
+| **👤 Premium Customer** | `customer@insurance.com` | `Customer@123` |
 
 ---
 
 ## 📬 Connect with Developer
 
-Have questions, suggestions, or want to collaborate? Reach out:
+Have questions, suggestions, or want to collaborate? Feel free to reach out:
 
-- **🐙 GitHub**: [SaurabhPandey016](https://github.com/SaurabhPandey016)
-- **💼 LinkedIn**: [Saurabh Pandey](https://www.linkedin.com/in/saurabhpandey-/)
-- **📧 Email**: [developersaurabh04@gmail.com](mailto:developersaurabh04@gmail.com)
-- **📞 Phone**: [+91 8720026790](tel:+918720026790)
+*   **🐙 GitHub**: [SaurabhPandey016](https://github.com/SaurabhPandey016)
+*   **💼 LinkedIn**: [Saurabh Pandey](https://www.linkedin.com/in/saurabhpandey-/)
+*   **📧 Email**: [developersaurabh04@gmail.com](mailto:developersaurabh04@gmail.com)
+*   **📞 Phone**: [+91 8720026790](tel:+918720026790)
 
 ---
-<p align="center">Made with ❤️ by Saurabh pandey</p>
+<p align="center" style="font-size: 14px; font-weight: bold; margin-top: 40px; color: #818cf8;">
+  Made with ❤️ by Saurabh Pandey
+</p>
