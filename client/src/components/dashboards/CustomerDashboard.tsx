@@ -15,6 +15,7 @@ import {
   TrendingUp
 } from 'lucide-react';
 import Link from 'next/link';
+import { useAuth } from '@/components/AuthContext';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:10000/api';
 
@@ -24,12 +25,24 @@ export default function CustomerDashboard() {
   const [claims, setClaims] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const { user, refreshUser } = useAuth();
+
   // Checkout states
   const [selectedPayment, setSelectedPayment] = useState<any>(null);
   const [paymentMethod, setPaymentMethod] = useState('Credit Card');
   const [paying, setPaying] = useState(false);
   const [paymentSuccess, setPaymentSuccess] = useState<any>(null);
   const [paymentError, setPaymentError] = useState('');
+
+  // Personal Profile Edit states
+  const [showProfileEdit, setShowProfileEdit] = useState(false);
+  const [profileName, setProfileName] = useState('');
+  const [profilePhone, setProfilePhone] = useState('');
+  const [profileAddress, setProfileAddress] = useState('');
+  const [profileDob, setProfileDob] = useState('');
+  const [profileSubmitting, setProfileSubmitting] = useState(false);
+  const [profileMessage, setProfileMessage] = useState('');
+  const [profileError, setProfileError] = useState('');
 
   const fetchCustomerData = async () => {
     try {
@@ -58,6 +71,48 @@ export default function CustomerDashboard() {
   useEffect(() => {
     fetchCustomerData();
   }, []);
+
+  useEffect(() => {
+    if (user) {
+      setProfileName(user.name || '');
+      setProfilePhone(user.phone || '');
+      setProfileAddress(user.customerProfile?.address || '');
+      setProfileDob(user.customerProfile?.dob ? new Date(user.customerProfile.dob).toISOString().split('T')[0] : '');
+    }
+  }, [user]);
+
+  const handleProfileUpdate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setProfileSubmitting(true);
+    setProfileError('');
+    setProfileMessage('');
+    try {
+      const res = await fetch(`${API_URL}/customers/${user?.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: profileName,
+          phone: profilePhone || undefined,
+          address: profileAddress || undefined,
+          dob: profileDob || undefined,
+        }),
+        credentials: 'include',
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setProfileMessage('Your profile updated successfully.');
+        setShowProfileEdit(false);
+        await refreshUser();
+      } else {
+        setProfileError(data.message || 'Failed to update profile.');
+      }
+    } catch (err) {
+      console.error(err);
+      setProfileError('Connection error.');
+    } finally {
+      setProfileSubmitting(false);
+    }
+  };
 
   const handleProcessPayment = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -112,6 +167,18 @@ export default function CustomerDashboard() {
   const outstandingAmount = pendingPayments.reduce((acc, p) => acc + p.amount, 0);
   const activeClaims = claims.filter(c => c.status === 'PENDING' || c.status === 'UNDER_REVIEW').length;
 
+  const today = new Date();
+  const thirtyDaysLater = new Date();
+  thirtyDaysLater.setDate(today.getDate() + 30);
+
+  const expiringPolicies = policies.filter(p => {
+    if (p.status !== 'ACTIVE') return false;
+    const end = new Date(p.endDate);
+    return end >= today && end <= thirtyDaysLater;
+  });
+
+  const overduePayments = payments.filter(p => p.status === 'OVERDUE' || (p.status === 'PENDING' && new Date(p.dueDate) < today));
+
   return (
     <div className="space-y-8 font-sans">
       {/* Title Header */}
@@ -129,6 +196,139 @@ export default function CustomerDashboard() {
             <span>File New Claim</span>
           </Link>
         </div>
+      </div>
+
+      {/* Expiry and Overdue Alerts */}
+      {(expiringPolicies.length > 0 || overduePayments.length > 0) && (
+        <div className="space-y-3">
+          {expiringPolicies.map(p => (
+            <div key={p.id} className="flex items-center space-x-3 rounded-xl bg-amber-500/10 border border-amber-500/20 p-4 text-xs text-amber-400 animate-pulse">
+              <ShieldAlert className="h-5 w-5 shrink-0" />
+              <div>
+                <span className="font-bold">Policy Expiry Alert:</span> Your policy <span className="font-semibold text-white">'{p.policyType?.name}' ({p.policyNumber})</span> is expiring on <span className="font-semibold text-white">{new Date(p.endDate).toLocaleDateString()}</span>! Contact an agent to renew.
+              </div>
+            </div>
+          ))}
+          {overduePayments.map(p => (
+            <div key={p.id} className="flex items-center space-x-3 rounded-xl bg-rose-500/10 border border-rose-500/20 p-4 text-xs text-rose-455">
+              <AlertCircle className="h-5 w-5 shrink-0 animate-bounce" />
+              <div>
+                <span className="font-bold">Overdue Payment Notice:</span> An installment of <span className="font-bold text-white">${p.amount.toFixed(2)}</span> for policy <span className="font-semibold text-white">'{p.policy?.policyType?.name || 'Active Contract'}'</span> was due on <span className="font-semibold text-white">{new Date(p.dueDate).toLocaleDateString()}</span>. Please settle it to prevent lapse in cover.
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Personal Profile Details Card */}
+      <div className="rounded-2xl border border-slate-900 bg-slate-900/20 p-6 space-y-4">
+        <div className="flex items-center justify-between border-b border-slate-950 pb-2">
+          <h3 className="text-base font-bold text-slate-200">My Client Profile</h3>
+          <button
+            onClick={() => {
+              setShowProfileEdit(!showProfileEdit);
+              setProfileError('');
+              setProfileMessage('');
+            }}
+            className="text-xs font-bold text-indigo-400 hover:text-indigo-300 transition"
+          >
+            {showProfileEdit ? 'Cancel Editing' : 'Edit Profile'}
+          </button>
+        </div>
+
+        {profileMessage && (
+          <div className="flex items-center space-x-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20 p-4 text-xs text-emerald-450">
+            <CheckCircle2 className="h-4.5 w-4.5" />
+            <span>{profileMessage}</span>
+          </div>
+        )}
+
+        {profileError && (
+          <div className="flex items-center space-x-2 rounded-xl bg-rose-500/10 border border-rose-500/20 p-4 text-xs text-rose-455">
+            <AlertCircle className="h-4.5 w-4.5" />
+            <span>{profileError}</span>
+          </div>
+        )}
+
+        {showProfileEdit ? (
+          <form onSubmit={handleProfileUpdate} className="space-y-4 max-w-xl animate-fadeIn">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div>
+                <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Full Name</label>
+                <input
+                  type="text"
+                  value={profileName}
+                  onChange={(e) => setProfileName(e.target.value)}
+                  className="block w-full rounded-lg border border-slate-800 bg-slate-950 px-3.5 py-2 text-sm text-slate-100 focus:outline-none focus:border-indigo-500 transition"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Phone Number</label>
+                <input
+                  type="tel"
+                  value={profilePhone}
+                  onChange={(e) => setProfilePhone(e.target.value)}
+                  className="block w-full rounded-lg border border-slate-800 bg-slate-950 px-3.5 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-indigo-500 transition"
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div>
+                <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Date of Birth</label>
+                <input
+                  type="date"
+                  value={profileDob}
+                  onChange={(e) => setProfileDob(e.target.value)}
+                  className="block w-full rounded-lg border border-slate-800 bg-slate-950 px-3.5 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-indigo-500 transition"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Residential Address</label>
+                <input
+                  type="text"
+                  value={profileAddress}
+                  onChange={(e) => setProfileAddress(e.target.value)}
+                  className="block w-full rounded-lg border border-slate-800 bg-slate-950 px-3.5 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-indigo-500 transition"
+                />
+              </div>
+            </div>
+            <button
+              type="submit"
+              disabled={profileSubmitting}
+              className="rounded-lg bg-indigo-650 px-5 py-2 text-xs font-bold text-white shadow hover:bg-indigo-500 transition disabled:bg-indigo-700"
+            >
+              {profileSubmitting ? 'Updating...' : 'Save Profile Changes'}
+            </button>
+          </form>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 text-xs bg-slate-950/40 p-4 border border-slate-900 rounded-xl">
+            <div>
+              <span className="block text-slate-500 uppercase tracking-wider text-[10px]">Registered Name</span>
+              <span className="text-sm font-semibold text-slate-200 mt-1 block">{user?.name}</span>
+            </div>
+            <div>
+              <span className="block text-slate-500 uppercase tracking-wider text-[10px]">Email Address</span>
+              <span className="text-sm font-semibold text-slate-200 mt-1 block">{user?.email}</span>
+            </div>
+            <div>
+              <span className="block text-slate-500 uppercase tracking-wider text-[10px]">Mobile Contact</span>
+              <span className="text-sm font-semibold text-slate-200 mt-1 block">{user?.phone || '—'}</span>
+            </div>
+            <div>
+              <span className="block text-slate-500 uppercase tracking-wider text-[10px]">Date of Birth</span>
+              <span className="text-sm font-semibold text-slate-200 mt-1 block">
+                {user?.customerProfile?.dob ? new Date(user.customerProfile.dob).toLocaleDateString() : '—'}
+              </span>
+            </div>
+            {user?.customerProfile?.address && (
+              <div className="sm:col-span-2 md:col-span-4 border-t border-slate-900/60 pt-2.5 mt-1.5">
+                <span className="block text-slate-500 uppercase tracking-wider text-[10px]">Residential Address</span>
+                <span className="text-sm font-medium text-slate-350 mt-1 block">{user.customerProfile.address}</span>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Overview Cards */}

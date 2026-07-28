@@ -41,6 +41,7 @@ export const claimController = {
         customerId: req.user.id, // points to User.id
         amountRequested: parsedData.amountRequested,
         description: parsedData.description,
+        documentId: parsedData.documentId,
       });
 
       return res.status(201).json({

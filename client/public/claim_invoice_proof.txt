@@ -1,0 +1,9 @@
+HOSPITAL RECEIPT PROOF
+Receipt ID: REC-992384-2026
+Date: 2026-07-28
+Claim Coverage: Health / Accident / OPD
+Total Amount Paid: $500.00
+Payment Status: SUCCESS
+Physician: Dr. J. Watson
+Diagnosis: Minor sprain/concussion recovery.
+Authorized Stamp: Insurance Medical Vault Verified.

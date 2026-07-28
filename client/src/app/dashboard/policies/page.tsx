@@ -44,6 +44,11 @@ export default function PoliciesPage() {
   const [coverageLimit, setCoverageLimit] = useState('');
   const [termsMonths, setTermsMonths] = useState('12');
 
+  // Renewal states
+  const [selectedRenewPolicy, setSelectedRenewPolicy] = useState<any>(null);
+  const [renewPremium, setRenewPremium] = useState('');
+  const [renewMonths, setRenewMonths] = useState('12');
+
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -193,6 +198,65 @@ export default function PoliciesPage() {
     }
   };
 
+  const handleCancelPolicy = async (policyId: string) => {
+    if (!confirm('Are you sure you want to cancel this policy? Coverage will be terminated immediately.')) return;
+    setSubmitting(true);
+    setError('');
+    setMessage('');
+    try {
+      const res = await fetch(`${API_URL}/policies/${policyId}/cancel`, {
+        method: 'POST',
+        credentials: 'include',
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setMessage('Policy cancelled successfully.');
+        await fetchData();
+      } else {
+        setError(data.message || 'Failed to cancel policy.');
+      }
+    } catch (err) {
+      console.error(err);
+      setError('Connection error.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleRenewPolicySubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedRenewPolicy) return;
+    setSubmitting(true);
+    setError('');
+    setMessage('');
+    try {
+      const res = await fetch(`${API_URL}/policies/${selectedRenewPolicy.id}/renew`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          premiumAmount: parseFloat(renewPremium) || undefined,
+          durationMonths: parseInt(renewMonths) || undefined,
+        }),
+        credentials: 'include',
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setMessage('Policy renewed successfully, and renewal payment installments generated.');
+        setSelectedRenewPolicy(null);
+        setRenewPremium('');
+        setRenewMonths('12');
+        await fetchData();
+      } else {
+        setError(data.message || 'Failed to renew policy.');
+      }
+    } catch (err) {
+      console.error(err);
+      setError('Connection error.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex h-[50vh] items-center justify-center">
@@ -262,6 +326,54 @@ export default function PoliciesPage() {
           <AlertCircle className="h-4.5 w-4.5" />
           <span>{error}</span>
         </div>
+      )}
+
+      {/* Form: Renew Policy (Agent/Admin) */}
+      {selectedRenewPolicy && (
+        <form onSubmit={handleRenewPolicySubmit} className="rounded-2xl border border-slate-900 bg-slate-900/20 p-6 space-y-4 max-w-xl animate-fadeIn">
+          <h3 className="text-base font-bold text-slate-200 border-b border-slate-950 pb-2">Renew Policy: {selectedRenewPolicy.policyNumber}</h3>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div>
+              <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Renewal Premium Amount ($)</label>
+              <input
+                type="number"
+                step="0.01"
+                value={renewPremium}
+                onChange={(e) => setRenewPremium(e.target.value)}
+                className="block w-full rounded-lg border border-slate-800 bg-slate-950 px-3.5 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-indigo-500 transition"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Renewal Terms (Duration in Months)</label>
+              <select
+                value={renewMonths}
+                onChange={(e) => setRenewMonths(e.target.value)}
+                className="block w-full rounded-lg border border-slate-800 bg-slate-950 px-3.5 py-2 text-sm text-slate-100 focus:outline-none focus:border-indigo-500 transition"
+              >
+                <option value="6">6 Months</option>
+                <option value="12">12 Months (1 Year)</option>
+                <option value="24">24 Months (2 Years)</option>
+              </select>
+            </div>
+          </div>
+          <div className="flex items-center space-x-3 pt-2">
+            <button
+              type="submit"
+              disabled={submitting}
+              className="rounded-lg bg-indigo-650 px-4 py-2 text-xs font-bold text-white shadow hover:bg-indigo-500 transition"
+            >
+              Confirm Renewal
+            </button>
+            <button
+              type="button"
+              onClick={() => setSelectedRenewPolicy(null)}
+              className="rounded-lg border border-slate-800 bg-slate-950 px-4 py-2 text-xs font-semibold text-slate-450 hover:text-white transition"
+            >
+              Cancel
+            </button>
+          </div>
+        </form>
       )}
 
       {/* 1. Form: Define Policy Template (Admin) */}
@@ -458,6 +570,7 @@ export default function PoliciesPage() {
                   <th className="px-4 py-3.5 text-right">Coverage Limit</th>
                   <th className="px-4 py-3.5">Term Dates</th>
                   <th className="px-4 py-3.5 text-right">Status</th>
+                  {!isCustomer && <th className="px-4 py-3.5 text-right">Actions</th>}
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-900/80">
@@ -481,6 +594,30 @@ export default function PoliciesPage() {
                         {p.status}
                       </span>
                     </td>
+                    {!isCustomer && (
+                      <td className="px-4 py-3.5 text-right space-x-2">
+                        {p.status === 'ACTIVE' && (
+                          <>
+                            <button
+                              onClick={() => {
+                                setSelectedRenewPolicy(p);
+                                setRenewPremium(p.premiumAmount.toString());
+                                window.scrollTo({ top: 0, behavior: 'smooth' });
+                              }}
+                              className="rounded bg-indigo-600/20 hover:bg-indigo-600 px-2 py-1 text-xs font-bold text-indigo-400 hover:text-white transition active:scale-[0.98]"
+                            >
+                              Renew
+                            </button>
+                            <button
+                              onClick={() => handleCancelPolicy(p.id)}
+                              className="rounded bg-rose-500/10 hover:bg-rose-600 px-2 py-1 text-xs font-bold text-rose-450 hover:text-white transition active:scale-[0.98]"
+                            >
+                              Cancel
+                            </button>
+                          </>
+                        )}
+                      </td>
+                    )}
                   </tr>
                 ))}
               </tbody>

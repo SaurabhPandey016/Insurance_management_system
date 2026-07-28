@@ -43,6 +43,13 @@ export default function CustomersPage() {
   const [address, setAddress] = useState('');
   const [dob, setDob] = useState('');
 
+  // Edit Form states
+  const [selectedEditCustomer, setSelectedEditCustomer] = useState<any>(null);
+  const [editName, setEditName] = useState('');
+  const [editPhone, setEditPhone] = useState('');
+  const [editAddress, setEditAddress] = useState('');
+  const [editDob, setEditDob] = useState('');
+
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -119,6 +126,40 @@ export default function CustomersPage() {
     }
   };
 
+  const handleEditSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedEditCustomer) return;
+    setSubmitting(true);
+    setError('');
+    setMessage('');
+    try {
+      const res = await fetch(`${API_URL}/customers/${selectedEditCustomer.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: editName,
+          phone: editPhone || undefined,
+          address: editAddress || undefined,
+          dob: editDob || undefined,
+        }),
+        credentials: 'include',
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setMessage('Customer profile updated successfully.');
+        setSelectedEditCustomer(null);
+        await fetchCustomers();
+      } else {
+        setError(data.message || 'Failed to update customer details.');
+      }
+    } catch (err) {
+      console.error(err);
+      setError('Connection error.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const handleViewDetails = async (cId: string) => {
     setFetchingDetails(true);
     setSelectedCustomerDetails(null);
@@ -181,6 +222,70 @@ export default function CustomersPage() {
           <AlertCircle className="h-4.5 w-4.5" />
           <span>{error}</span>
         </div>
+      )}
+
+      {/* Edit Customer Form */}
+      {selectedEditCustomer && (
+        <form onSubmit={handleEditSubmit} className="rounded-2xl border border-slate-900 bg-slate-900/20 p-6 space-y-4 max-w-2xl animate-fadeIn">
+          <h3 className="text-base font-bold text-slate-200 border-b border-slate-950 pb-2">Edit Customer: {selectedEditCustomer.email}</h3>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div>
+              <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Customer Name *</label>
+              <input
+                type="text"
+                value={editName}
+                onChange={(e) => setEditName(e.target.value)}
+                className="block w-full rounded-lg border border-slate-800 bg-slate-950 px-3.5 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-indigo-500 transition"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Phone Number</label>
+              <input
+                type="tel"
+                value={editPhone}
+                onChange={(e) => setEditPhone(e.target.value)}
+                className="block w-full rounded-lg border border-slate-800 bg-slate-950 px-3.5 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-indigo-500 transition"
+              />
+            </div>
+          </div>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div>
+              <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Date of Birth</label>
+              <input
+                type="date"
+                value={editDob}
+                onChange={(e) => setEditDob(e.target.value)}
+                className="block w-full rounded-lg border border-slate-800 bg-slate-950 px-3.5 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-indigo-500 transition"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Residential Address</label>
+              <input
+                type="text"
+                value={editAddress}
+                onChange={(e) => setEditAddress(e.target.value)}
+                className="block w-full rounded-lg border border-slate-800 bg-slate-950 px-3.5 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-indigo-500 transition"
+              />
+            </div>
+          </div>
+          <div className="flex items-center space-x-3 pt-2">
+            <button
+              type="submit"
+              disabled={submitting}
+              className="rounded-lg bg-indigo-650 px-5 py-2 text-xs font-bold text-white shadow hover:bg-indigo-500 transition"
+            >
+              {submitting ? 'Updating...' : 'Save Changes'}
+            </button>
+            <button
+              type="button"
+              onClick={() => setSelectedEditCustomer(null)}
+              className="rounded-lg border border-slate-800 bg-slate-950 px-5 py-2 text-xs font-semibold text-slate-400 hover:text-white transition"
+            >
+              Cancel
+            </button>
+          </div>
+        </form>
       )}
 
       {/* 1. Detail Panel: Customer History Summary */}
@@ -403,13 +508,27 @@ export default function CustomersPage() {
                       </span>
                     </td>
                     <td className="px-4 py-3.5 text-xs text-slate-500">{new Date(c.createdAt).toLocaleDateString()}</td>
-                    <td className="px-4 py-3.5 text-right">
+                    <td className="px-4 py-3.5 text-right space-x-2">
                       <button
                         onClick={() => handleViewDetails(c.id)}
                         disabled={fetchingDetails}
-                        className="rounded bg-indigo-600/20 hover:bg-indigo-650 px-2.5 py-1.5 text-xs font-bold text-indigo-400 hover:text-white transition active:scale-[0.98]"
+                        className="rounded bg-indigo-600/20 hover:bg-indigo-600 px-2.5 py-1.5 text-xs font-bold text-indigo-400 hover:text-white transition active:scale-[0.98]"
                       >
                         Inspect History
+                      </button>
+                      <button
+                        onClick={() => {
+                          setSelectedEditCustomer(c);
+                          setEditName(c.name);
+                          setEditPhone(c.phone || '');
+                          setEditAddress(c.address || '');
+                          setEditDob(c.dob ? new Date(c.dob).toISOString().split('T')[0] : '');
+                          setSelectedCustomerDetails(null);
+                          window.scrollTo({ top: 0, behavior: 'smooth' });
+                        }}
+                        className="rounded bg-emerald-600/20 hover:bg-emerald-600 px-2.5 py-1.5 text-xs font-bold text-emerald-450 hover:text-white transition active:scale-[0.98]"
+                      >
+                        Edit Details
                       </button>
                     </td>
                   </tr>

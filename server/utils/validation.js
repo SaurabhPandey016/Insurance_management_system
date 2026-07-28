@@ -47,6 +47,7 @@ export const fileClaimSchema = z.object({
   policyId: z.string().uuid({ message: "Invalid policy ID" }),
   amountRequested: z.number().positive({ message: "Claim amount must be positive" }),
   description: z.string().min(10, { message: "Please provide a detailed description of the claim" }),
+  documentId: z.string().uuid({ message: "Invalid document ID" }).optional(),
 });
 
 export const reviewClaimSchema = z.object({

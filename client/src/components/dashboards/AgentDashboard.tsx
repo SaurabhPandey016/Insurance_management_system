@@ -65,48 +65,59 @@ export default function AgentDashboard() {
       </div>
 
       {/* Stats row */}
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-5">
         {/* Managed Customers */}
-        <div className="rounded-2xl border border-slate-900 bg-slate-900/10 p-6 flex items-center justify-between">
+        <div className="rounded-2xl border border-slate-900 bg-slate-900/10 p-5 flex items-center justify-between">
           <div className="space-y-2">
             <span className="text-xs font-semibold text-slate-400 uppercase tracking-widest">My Customers</span>
             <div className="text-3xl font-bold text-white">{overview.totalCustomers}</div>
           </div>
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-indigo-500/10 border border-indigo-500/25 text-indigo-400">
-            <Users className="h-6 w-6" />
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-500/10 border border-indigo-500/25 text-indigo-400">
+            <Users className="h-5 w-5" />
           </div>
         </div>
 
         {/* Collections */}
-        <div className="rounded-2xl border border-slate-900 bg-slate-900/10 p-6 flex items-center justify-between">
+        <div className="rounded-2xl border border-slate-900 bg-slate-900/10 p-5 flex items-center justify-between">
           <div className="space-y-2">
             <span className="text-xs font-semibold text-slate-400 uppercase tracking-widest">Premium Collected</span>
             <div className="text-3xl font-bold text-white">${overview.collections?.totalCollected?.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
           </div>
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-500/10 border border-emerald-500/25 text-emerald-400">
-            <DollarSign className="h-6 w-6" />
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500/10 border border-emerald-500/25 text-emerald-400">
+            <DollarSign className="h-5 w-5" />
           </div>
         </div>
 
         {/* Issued Policies */}
-        <div className="rounded-2xl border border-slate-900 bg-slate-900/10 p-6 flex items-center justify-between">
+        <div className="rounded-2xl border border-slate-900 bg-slate-900/10 p-5 flex items-center justify-between">
           <div className="space-y-2">
-            <span className="text-xs font-semibold text-slate-400 uppercase tracking-widest">My Policies Issued</span>
+            <span className="text-xs font-semibold text-slate-400 uppercase tracking-widest">My Active Policies</span>
             <div className="text-3xl font-bold text-white">{overview.policyMetrics?.ACTIVE || 0}</div>
           </div>
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-violet-500/10 border border-violet-500/25 text-violet-400">
-            <FileText className="h-6 w-6" />
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-500/10 border border-violet-500/25 text-violet-400">
+            <FileText className="h-5 w-5" />
+          </div>
+        </div>
+
+        {/* Expired Policies */}
+        <div className="rounded-2xl border border-slate-900 bg-slate-900/10 p-5 flex items-center justify-between">
+          <div className="space-y-2">
+            <span className="text-xs font-semibold text-slate-400 uppercase tracking-widest">Expired Policies</span>
+            <div className="text-3xl font-bold text-white text-slate-400">{overview.policyMetrics?.EXPIRED || 0}</div>
+          </div>
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-rose-500/10 border border-rose-500/25 text-rose-455">
+            <FileText className="h-5 w-5" />
           </div>
         </div>
 
         {/* Claims Pending */}
-        <div className="rounded-2xl border border-slate-900 bg-slate-900/10 p-6 flex items-center justify-between">
+        <div className="rounded-2xl border border-slate-900 bg-slate-900/10 p-5 flex items-center justify-between">
           <div className="space-y-2">
             <span className="text-xs font-semibold text-slate-400 uppercase tracking-widest">Claims Pending</span>
             <div className="text-3xl font-bold text-white">{overview.claimMetrics?.PENDING || 0}</div>
           </div>
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-amber-500/10 border border-amber-500/25 text-amber-400">
-            <ShieldAlert className="h-6 w-6" />
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-500/10 border border-amber-500/25 text-amber-400">
+            <ShieldAlert className="h-5 w-5" />
           </div>
         </div>
       </div>

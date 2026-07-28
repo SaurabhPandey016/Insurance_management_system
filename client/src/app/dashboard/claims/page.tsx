@@ -13,7 +13,8 @@ import {
   Check,
   X,
   FileCheck,
-  DollarSign
+  DollarSign,
+  Download
 } from 'lucide-react';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:10000/api';
@@ -32,6 +33,7 @@ export default function ClaimsPage() {
   const [policyId, setPolicyId] = useState('');
   const [amountRequested, setAmountRequested] = useState('');
   const [description, setDescription] = useState('');
+  const [claimFile, setClaimFile] = useState<File | null>(null);
 
   // Review claim parameters
   const [reviewRemarks, setReviewRemarks] = useState('');
@@ -75,6 +77,33 @@ export default function ClaimsPage() {
     setMessage('');
 
     try {
+      let documentId: string | undefined = undefined;
+
+      // Upload file first if selected
+      if (claimFile) {
+        const formData = new FormData();
+        formData.append('title', `Claim Proof - ${new Date().toLocaleDateString()}`);
+        formData.append('fileType', 'CLAIM_SUPPORT');
+        formData.append('file', claimFile);
+        formData.append('policyId', policyId);
+
+        const uploadRes = await fetch(`${API_URL}/documents/upload`, {
+          method: 'POST',
+          body: formData,
+          credentials: 'include',
+        });
+
+        const uploadData = await uploadRes.json();
+        if (uploadRes.ok && uploadData.success) {
+          documentId = uploadData.document.id;
+        } else {
+          setError(uploadData.message || 'Supporting document upload failed. Max file size: 5MB.');
+          setSubmitting(false);
+          return;
+        }
+      }
+
+      // Submit the claim
       const res = await fetch(`${API_URL}/claims`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -82,6 +111,7 @@ export default function ClaimsPage() {
           policyId,
           amountRequested: parseFloat(amountRequested),
           description,
+          documentId,
         }),
         credentials: 'include',
       });
@@ -94,6 +124,7 @@ export default function ClaimsPage() {
         setPolicyId('');
         setAmountRequested('');
         setDescription('');
+        setClaimFile(null);
         await fetchData();
       } else {
         setError(data.message || 'Failed to submit claim.');
@@ -240,6 +271,20 @@ export default function ClaimsPage() {
             />
           </div>
 
+          <div>
+            <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Upload Supporting Document (Optional)</label>
+            <input
+              type="file"
+              onChange={(e) => {
+                if (e.target.files && e.target.files[0]) {
+                  setClaimFile(e.target.files[0]);
+                }
+              }}
+              className="block w-full text-xs text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-indigo-500/10 file:text-indigo-400 hover:file:bg-indigo-500/20 file:cursor-pointer cursor-pointer border border-slate-800 bg-slate-950 rounded-lg p-1.5 focus:outline-none"
+            />
+            <p className="text-[10px] text-slate-550 mt-1">Provide receipts, invoices, or photos supporting this claim. Max file size: 5MB.</p>
+          </div>
+
           <button
             type="submit"
             disabled={submitting}
@@ -293,6 +338,26 @@ export default function ClaimsPage() {
               <span className="block text-[10px] uppercase text-slate-400 mb-1">Claim Reason</span>
               <p className="text-slate-300 leading-relaxed font-sans">{selectedReviewClaim.description}</p>
             </div>
+
+            {selectedReviewClaim.documents && selectedReviewClaim.documents.length > 0 && (
+              <div className="border-t border-slate-905/65 pt-3 text-slate-400">
+                <span className="block text-[10px] uppercase mb-1.5">Supporting Documents</span>
+                <div className="flex flex-col space-y-1.5">
+                  {selectedReviewClaim.documents.map((doc: any) => (
+                    <a
+                      key={doc.id}
+                      href={`${API_URL}/documents/${doc.id}/download`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center space-x-1.5 text-xs font-bold text-indigo-400 hover:text-indigo-300 hover:underline transition w-fit"
+                    >
+                      <Download className="h-3.5 w-3.5" />
+                      <span>{doc.title}</span>
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="space-y-3">
@@ -357,7 +422,14 @@ export default function ClaimsPage() {
                 {claims.map((claim) => (
                   <tr key={claim.id} className="hover:bg-slate-900/40 transition">
                     <td className="px-4 py-3.5 font-mono text-xs text-white font-bold">{claim.claimNumber}</td>
-                    <td className="px-4 py-3.5 text-xs text-slate-350">{claim.policy?.policyType?.name}</td>
+                    <td className="px-4 py-3.5 text-xs text-slate-350">
+                      <div>{claim.policy?.policyType?.name}</div>
+                      {claim.documents && claim.documents.length > 0 && (
+                        <span className="inline-flex items-center text-[10px] text-indigo-455 mt-0.5 font-bold uppercase tracking-wider">
+                          <Download className="h-2.5 w-2.5 mr-1" /> Attachment
+                        </span>
+                      )}
+                    </td>
                     {!isCustomer && <td className="px-4 py-3.5 font-medium">{claim.customer?.name}</td>}
                     <td className="px-4 py-3.5 text-right text-slate-200 font-bold">${claim.amountRequested.toLocaleString()}</td>
                     <td className="px-4 py-3.5 text-xs text-slate-400">{new Date(claim.dateSubmitted).toLocaleDateString()}</td>

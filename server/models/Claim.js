@@ -1,7 +1,7 @@
 import prisma from '../db.js';
 
 export const ClaimModel = {
-  async createClaim({ claimNumber, policyId, customerId, amountRequested, description }) {
+  async createClaim({ claimNumber, policyId, customerId, amountRequested, description, documentId }) {
     return prisma.claim.create({
       data: {
         claimNumber,
@@ -10,6 +10,11 @@ export const ClaimModel = {
         amountRequested,
         description,
         status: 'PENDING',
+        ...(documentId && {
+          documents: {
+            connect: { id: documentId }
+          }
+        })
       },
       include: {
         policy: {
@@ -17,6 +22,7 @@ export const ClaimModel = {
             policyType: true,
           },
         },
+        documents: true,
       },
     });
   },
