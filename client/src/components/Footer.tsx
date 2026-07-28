@@ -1,11 +1,15 @@
 'use client';
 
 import React from 'react';
+import { usePathname } from 'next/navigation';
 import { Shield, Github, Linkedin, Mail, Phone, Heart } from 'lucide-react';
 
 export default function Footer() {
+  const pathname = usePathname();
+  const isDashboard = pathname?.startsWith('/dashboard');
+
   return (
-    <footer className="w-full bg-slate-950 border-t border-slate-900/60 text-slate-400 font-sans py-12 mt-auto">
+    <footer className={`w-full bg-slate-950 border-t border-slate-900/60 text-slate-400 font-sans py-12 mt-auto transition-all duration-350 ${isDashboard ? 'md:pl-64' : ''}`}>
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 md:grid-cols-12 gap-8 pb-8 border-b border-slate-900/40">
           {/* Logo & Tagline */}
