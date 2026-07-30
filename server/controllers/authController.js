@@ -46,10 +46,11 @@ export const authController = {
       );
 
       // Set cookie
+      const isProd = process.env.NODE_ENV === 'production';
       res.cookie('token', token, {
         httpOnly: true,
-        secure: false, // Set to true in production if running on HTTPS
-        sameSite: 'lax',
+        secure: isProd,
+        sameSite: isProd ? 'none' : 'lax',
         maxAge: 24 * 60 * 60 * 1000, // 24 hours
       });
 
@@ -107,10 +108,11 @@ export const authController = {
       );
 
       // Set cookie
+      const isProd = process.env.NODE_ENV === 'production';
       res.cookie('token', token, {
         httpOnly: true,
-        secure: false, // Set to true in production
-        sameSite: 'lax',
+        secure: isProd,
+        sameSite: isProd ? 'none' : 'lax',
         maxAge: 24 * 60 * 60 * 1000, // 24 hours
       });
 
@@ -131,10 +133,11 @@ export const authController = {
 
   async logout(req, res, next) {
     try {
+      const isProd = process.env.NODE_ENV === 'production';
       res.clearCookie('token', {
         httpOnly: true,
-        secure: false,
-        sameSite: 'lax',
+        secure: isProd,
+        sameSite: isProd ? 'none' : 'lax',
       });
       return res.json({
         success: true,
