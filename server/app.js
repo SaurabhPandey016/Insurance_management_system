@@ -20,9 +20,12 @@ dotenv.config();
 
 const app = express();
 
-// Custom CORS setup to support cookie sharing between client & server
+// Dynamic CORS setup to support credentials cookie sharing from any client origin (live app, previews, localhost)
 app.use(cors({
-  origin: process.env.CLIENT_URL || 'http://localhost:3000',
+  origin: (origin, callback) => {
+    // Echo back the requesting origin to allow any client domain dynamically
+    callback(null, true);
+  },
   credentials: true,
 }));
 
