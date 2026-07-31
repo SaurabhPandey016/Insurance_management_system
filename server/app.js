@@ -12,6 +12,7 @@ import claimRoutes from './routes/claimRoutes.js';
 import paymentRoutes from './routes/paymentRoutes.js';
 import documentRoutes from './routes/documentRoutes.js';
 import reportRoutes from './routes/reportRoutes.js';
+import adminRoutes from './routes/adminRoutes.js';
 
 // Import Centralized Error Handler
 import errorMiddleware from './middlewares/errorMiddleware.js';
@@ -44,6 +45,7 @@ app.use('/api/claims', claimRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/documents', documentRoutes);
 app.use('/api/reports', reportRoutes);
+app.use('/api/admin', adminRoutes);
 
 app.get('/', (req, res) => {
     res.send("Insurance Management System API is running smoothly.");

@@ -13,7 +13,8 @@ import {
   FileUp,
   FolderOpen,
   ClipboardList,
-  UserCheck
+  UserCheck,
+  Settings
 } from 'lucide-react';
 
 export default function Sidebar() {
@@ -58,6 +59,14 @@ export default function Sidebar() {
             <Link href="/dashboard/payments" className={linkClass('/dashboard/payments')}>
               <DollarSign className="h-5 w-5" />
               <span>Revenue Tracking</span>
+            </Link>
+            <Link href="/dashboard/employees" className={linkClass('/dashboard/employees')}>
+              <UserCheck className="h-5 w-5" />
+              <span>Staff Directory</span>
+            </Link>
+            <Link href="/dashboard/settings" className={linkClass('/dashboard/settings')}>
+              <Settings className="h-5 w-5" />
+              <span>System Settings</span>
             </Link>
           </>
         );
