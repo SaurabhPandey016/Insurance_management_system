@@ -204,11 +204,13 @@ export default function Home() {
       </section>
 
       {/* Footer */}
+      {/*
       <footer className="border-t border-slate-900 bg-slate-950 py-10 text-center">
         <p className="text-xs text-slate-500">
           &copy; {new Date().getFullYear()} InsuraShield Operations Platform. All rights reserved.
         </p>
       </footer>
+      */}
     </div>
   );
 }

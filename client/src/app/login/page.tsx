@@ -16,15 +16,27 @@ export default function LoginPage() {
   // Pre-fill credentials based on role tab for quick testing
   useEffect(() => {
     if (roleTab === 'CUSTOMER') {
-      setEmail('customer@insurance.com');
-      setPassword('Customer@123');
+      setEmail('');
+      setPassword('');
     } else if (roleTab === 'AGENT') {
-      setEmail('agent@insurance.com');
-      setPassword('Agent@123');
+      setEmail('');
+      setPassword('');
     } else if (roleTab === 'ADMIN') {
-      setEmail('admin@insurance.com');
-      setPassword('Admin@123');
+      setEmail('');
+      setPassword('');
     }
+
+    // if (roleTab === 'CUSTOMER') {
+    //   setEmail('customer@insurance.com');
+    //   setPassword('Customer@123');
+    // } else if (roleTab === 'AGENT') {
+    //   setEmail('agent@insurance.com');
+    //   setPassword('Agent@123');
+    // } else if (roleTab === 'ADMIN') {
+    //   setEmail('admin@insurance.com');
+    //   setPassword('Admin@123');
+    // }
+
     setError('');
   }, [roleTab]);
 

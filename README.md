@@ -141,7 +141,7 @@ The client portal will start on `http://localhost:3000`.
 
 ---
 
-## 🔐 Seeded Accounts for Testing
+<!-- ## 🔐 Seeded Accounts for Testing
 To facilitate evaluation, the seeding script populates test profiles with pre-configured relations. You can log in directly using:
 
 | User Role | Login Email | Testing Password |
@@ -150,7 +150,7 @@ To facilitate evaluation, the seeding script populates test profiles with pre-co
 | **💼 Insurance Agent** | `agent@insurance.com` | `Agent@123` |
 | **👤 Premium Customer** | `customer@insurance.com` | `Customer@123` |
 
----
+--- -->
 
 ## 📬 Connect with Developer
 
